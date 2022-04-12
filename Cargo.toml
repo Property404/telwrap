@@ -1,0 +1,16 @@
+[package]
+name = "telwrap"
+authors = ["Dagan Martinez"]
+license = "MIT OR Apache-2.0"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+clap = { version = "3.1.8", features = ["derive"] }
+tokio = { version = "1.17.0", features = ["macros", "rt-multi-thread", "process", "io-util", "net", "fs"] }
+tokio-stream = "0.1.8"
+bytes = "1.1.0"
+nix = "0.23.1"
+
+[dependencies.telly]
+path = "telly"

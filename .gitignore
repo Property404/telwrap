@@ -1,0 +1,11 @@
+*
+!**/
+!*.rs
+!*.yaml
+!*.yml
+!*.toml
+!*.lock
+!*.md
+!.gitignore
+!telly
+target

@@ -1,0 +1,3 @@
+[submodule "telly"]
+	path = telly
+	url = git@github.com:Property404/telly
