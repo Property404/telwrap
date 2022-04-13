@@ -1,3 +1,4 @@
+#![allow(unused_imports)]
 use crate::telnet::TelnetStream;
 use std::{future::Future, io::Write, marker::Unpin};
 use telly::{TelnetEvent, TelnetOption};
@@ -74,7 +75,7 @@ async fn handle_client(
         .unwrap();
 
     loop {
-        let mut data = vec![0; 16];
+        let mut data = vec![0; 128];
         select! {
             bytes_read = stdout.read(&mut data) => {
                 if let Ok(bytes_read) = bytes_read {

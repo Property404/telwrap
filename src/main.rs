@@ -41,9 +41,11 @@ struct Args {
 
 #[tokio::main]
 async fn main() {
-    const CHANNEL_WIDTH: usize = 64;
-    let server = TelnetServer::new("127.0.0.1:9000").await;
     let args = Args::parse();
+
+    let host = "127.0.0.1:9000";
+    let server = TelnetServer::new(host).await;
+    println!("Listening on {host}");
     server
         .listen(Box::new(move |callback: ReverseCallback| {
             let args = args.clone();
@@ -63,15 +65,13 @@ async fn main() {
                     .args(&args.program_args)
                     .stdin(unsafe { Stdio::from_raw_fd(stdin.master) })
                     .stdout(unsafe { Stdio::from_raw_fd(stdout.master) })
-                    //.stdout(Stdio::piped())
+                    .stderr(unsafe { Stdio::from_raw_fd(stdout.master) })
                     .status();
                 let stdin = unsafe { File::from_raw_fd(stdin.slave) };
                 let stdout = unsafe { File::from_raw_fd(stdout.slave) };
-                //let stdout = child.stdout.take().unwrap();
 
                 callback.call(stdin, stdout).await;
                 child.await.expect("!");
-                //child.wait().await.unwrap();
             }
         }))
         .await;

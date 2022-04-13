@@ -12,6 +12,8 @@ use telly::{
 use tokio::io::{AsyncRead, AsyncWrite, AsyncWriteExt, ReadBuf};
 use tokio_stream::Stream;
 
+const BUFFER_SIZE: usize = 128;
+
 pub struct TelnetStream<Accessor>
 where
     Accessor: AsyncWrite + AsyncRead,
@@ -91,7 +93,6 @@ impl<T: AsyncWrite + AsyncRead + Unpin> Stream for TelnetStream<T> {
     type Item = TelnetEvent;
 
     fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
-        const BUFFER_SIZE: usize = 16;
         let mut vec: Vec<u8> = vec![0; BUFFER_SIZE];
         let mut vec = ReadBuf::new(&mut vec);
 
@@ -127,17 +128,21 @@ impl<T: AsyncWrite + AsyncRead + Unpin> Stream for TelnetStream<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use telly::TelnetCommand;
-    use tokio::io::duplex;
+    use telly::{TelnetCommand, TelnetSubnegotiation};
+    use tokio::io::{duplex, DuplexStream};
     use tokio_stream::StreamExt;
 
-    const CHANNEL_WIDTH: usize = 32;
+    fn get_mock_objects() -> (TelnetStream<DuplexStream>, TelnetStream<DuplexStream>) {
+        let (client, server) = duplex(BUFFER_SIZE * 2);
+
+        let client = TelnetStream::from_accessor(client);
+        let server = TelnetStream::from_accessor(server);
+        (client, server)
+    }
 
     #[tokio::test]
     async fn send_string() {
-        let (client, server) = duplex(CHANNEL_WIDTH);
-        let mut client = TelnetStream::from_accessor(client);
-        let mut server = TelnetStream::from_accessor(server);
+        let (mut client, mut server) = get_mock_objects();
 
         let test_string = "Hello World!";
         client.send_str(&test_string).await.unwrap();
@@ -154,9 +159,7 @@ mod tests {
 
     #[tokio::test]
     async fn send_events() {
-        let (client, server) = duplex(CHANNEL_WIDTH);
-        let mut client = TelnetStream::from_accessor(client);
-        let mut server = TelnetStream::from_accessor(server);
+        let (mut client, mut server) = get_mock_objects();
 
         let events = [
             TelnetEvent::Data(vec![0x42]),
@@ -168,10 +171,7 @@ mod tests {
             TelnetEvent::will(TelnetOption::SuppressGoAhead),
             TelnetEvent::dont(TelnetOption::TimingMark),
             TelnetEvent::wont(TelnetOption::BinaryTransmission),
-            TelnetEvent::SubNegotiation {
-                option: TelnetOption::BinaryTransmission,
-                bytes: vec![0xde, 0xad, 0xbe, 0xef],
-            },
+            TelnetSubnegotiation::TerminalTypeResponse("xterm-turbo-edition".into()).into(),
         ];
 
         for event in events {
