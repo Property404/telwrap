@@ -6,6 +6,7 @@ use clap::Parser;
 use nix::{
     pty::{self, openpty, Winsize},
     sys::termios,
+    unistd::dup,
 };
 use std::{
     env,
@@ -59,16 +60,15 @@ async fn main() {
                 let stdin_termios = termios::tcgetattr(std::io::stdin().as_raw_fd()).unwrap();
                 let stdout_termios = termios::tcgetattr(std::io::stdout().as_raw_fd()).unwrap();
                 assert_eq!(stdin_termios, stdout_termios);
-                let stdin = openpty(Some(&winsize), Some(&stdin_termios)).unwrap();
-                let stdout = openpty(Some(&winsize), Some(&stdout_termios)).unwrap();
+                let pty = openpty(Some(&winsize), Some(&stdout_termios)).unwrap();
                 let mut child = Command::new(&args.program)
                     .args(&args.program_args)
-                    .stdin(unsafe { Stdio::from_raw_fd(stdin.master) })
-                    .stdout(unsafe { Stdio::from_raw_fd(stdout.master) })
-                    .stderr(unsafe { Stdio::from_raw_fd(stdout.master) })
+                    .stdin(unsafe { Stdio::from_raw_fd(dup(pty.slave).unwrap()) })
+                    .stdout(unsafe { Stdio::from_raw_fd(dup(pty.slave).unwrap()) })
+                    .stderr(unsafe { Stdio::from_raw_fd(pty.slave) })
                     .status();
-                let stdin = unsafe { File::from_raw_fd(stdin.slave) };
-                let stdout = unsafe { File::from_raw_fd(stdout.slave) };
+                let stdin = unsafe { File::from_raw_fd(dup(pty.master).unwrap()) };
+                let stdout = unsafe { File::from_raw_fd(pty.master) };
 
                 callback.call(stdin, stdout).await;
                 child.await.expect("!");

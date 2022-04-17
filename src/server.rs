@@ -9,6 +9,8 @@ use tokio::{
 };
 use tokio_stream::StreamExt;
 
+const READ_BUFFER_SIZE: usize = 256;
+
 pub trait ReadableWritable: AsyncRead + AsyncWrite + Unpin {}
 
 pub struct TelnetServer {
@@ -75,10 +77,11 @@ async fn handle_client(
         .unwrap();
 
     loop {
-        let mut data = vec![0; 128];
+        let mut data = vec![0; READ_BUFFER_SIZE];
         select! {
-            bytes_read = stdout.read(&mut data) => {
-                if let Ok(bytes_read) = bytes_read {
+            // A small read buffer size will truncate output here
+            bytes_read = stdout.read(&mut data) => match bytes_read{
+                Ok(bytes_read) =>
                     if bytes_read != 0 {
                         // Pipe stdout to client
                         telnet.send_data(&data[0..bytes_read]).await.unwrap();
@@ -92,9 +95,9 @@ async fn handle_client(
                         // Reading's done
                         println!("No more book learnin'");
                         break;
-                    }
-                } else {
-                    println!("ERROR WHILE READING (todo: check if EWOULDBLOCK)");
+                    },
+                Err(err) => {
+                    println!("ERROR WHILE READING: {err}");
                     break;
                 }
             },

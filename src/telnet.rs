@@ -12,7 +12,7 @@ use telly::{
 use tokio::io::{AsyncRead, AsyncWrite, AsyncWriteExt, ReadBuf};
 use tokio_stream::Stream;
 
-const BUFFER_SIZE: usize = 128;
+const BUFFER_SIZE: usize = 16;
 
 pub struct TelnetStream<Accessor>
 where
@@ -30,7 +30,7 @@ where
 impl<Accessor: AsyncWrite + AsyncRead + Unpin> TelnetStream<Accessor> {
     /// Construct a TelnetStream from, e.g., a TcpStream
     pub fn from_accessor(accessor: Accessor) -> Self {
-        const CAPACITY: usize = 320;
+        const CAPACITY: usize = BUFFER_SIZE;
         Self {
             accessor,
             rx_buffer: BytesMut::with_capacity(CAPACITY),
@@ -167,7 +167,7 @@ mod tests {
             TelnetEvent::Data(vec![0x42, 0xFF]),
             TelnetEvent::Data(vec![0xFF]),
             TelnetEvent::Data(vec![0xFF, 0xFF]),
-            TelnetEvent::Command(TelnetCommand::NOP),
+            TelnetEvent::Command(TelnetCommand::Nop),
             TelnetEvent::will(TelnetOption::SuppressGoAhead),
             TelnetEvent::dont(TelnetOption::TimingMark),
             TelnetEvent::wont(TelnetOption::BinaryTransmission),
