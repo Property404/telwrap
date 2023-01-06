@@ -1,31 +1,14 @@
-#![allow(unused_imports)]
-#![allow(dead_code)]
-#![allow(unused_mut)]
-#![allow(unused_variables)]
 use clap::Parser;
 use nix::{
-    pty::{self, openpty, Winsize},
+    pty::{openpty, Winsize},
     sys::termios,
     unistd::dup,
 };
 use std::{
-    env,
-    marker::Unpin,
-    os::unix::{
-        io::{AsRawFd, FromRawFd},
-        process::CommandExt,
-    },
-    process::{self, Stdio},
-    time::Duration,
+    os::unix::io::{AsRawFd, FromRawFd},
+    process::Stdio,
 };
-use tokio::{
-    fs::File,
-    io::{duplex, AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt},
-    join,
-    process::Command,
-    sync::mpsc,
-    time::sleep,
-};
+use tokio::{fs::File, process::Command};
 
 use telwrap::server::{ReverseCallback, TelnetServer};
 
@@ -61,7 +44,7 @@ async fn main() {
                 let stdout_termios = termios::tcgetattr(std::io::stdout().as_raw_fd()).unwrap();
                 assert_eq!(stdin_termios, stdout_termios);
                 let pty = openpty(Some(&winsize), Some(&stdout_termios)).unwrap();
-                let mut child = Command::new(&args.program)
+                let child = Command::new(&args.program)
                     .args(&args.program_args)
                     .stdin(unsafe { Stdio::from_raw_fd(dup(pty.slave).unwrap()) })
                     .stdout(unsafe { Stdio::from_raw_fd(dup(pty.slave).unwrap()) })

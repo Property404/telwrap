@@ -1,6 +1,5 @@
-#![allow(unused_imports)]
 use crate::telnet::TelnetStream;
-use std::{future::Future, io::Write, marker::Unpin};
+use std::{future::Future, marker::Unpin};
 use telly::{TelnetEvent, TelnetOption};
 use tokio::{
     io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt},
@@ -107,7 +106,7 @@ async fn handle_client(
                     Some(TelnetEvent::Data(data)) => {
                         // Pipe data to program's stdin
                         for data in data {
-                            stdin.write(&[data]).await.unwrap();
+                            let _ = stdin.write(&[data]).await.unwrap();
                         }
                     }
                     Some(other) => {
