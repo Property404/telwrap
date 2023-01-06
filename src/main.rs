@@ -16,9 +16,14 @@ use telwrap::server::{ReverseCallback, TelnetServer};
 #[derive(Parser, Debug, Clone)]
 #[clap(author, version, about, long_about = None)]
 struct Args {
+    /// The host IP address.
+    #[arg(long, default_value = "127.0.0.1")]
+    host: String,
+    /// The Port
+    #[arg(short, long, default_value = "23")]
+    port: u16,
     /// The executable to wrap
     program: String,
-
     /// Program arguments
     program_args: Vec<String>,
 }
@@ -27,8 +32,8 @@ struct Args {
 async fn main() {
     let args = Args::parse();
 
-    let host = "127.0.0.1:9000";
-    let server = TelnetServer::new(host).await;
+    let host = format!("{}:{}", args.host, args.port);
+    let server = TelnetServer::new(&host).await;
     println!("Listening on {host}");
     server
         .listen(Box::new(move |callback: ReverseCallback| {

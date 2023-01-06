@@ -128,7 +128,7 @@ impl<T: AsyncWrite + AsyncRead + Unpin> Stream for TelnetStream<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use telly::{TelnetCommand, TelnetSubnegotiation};
+    use telly::TelnetCommand;
     use tokio::io::{duplex, DuplexStream};
     use tokio_stream::StreamExt;
 
