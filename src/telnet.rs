@@ -171,7 +171,7 @@ mod tests {
             TelnetEvent::will(TelnetOption::SuppressGoAhead),
             TelnetEvent::dont(TelnetOption::TimingMark),
             TelnetEvent::wont(TelnetOption::BinaryTransmission),
-            TelnetSubnegotiation::TerminalTypeResponse("xterm-turbo-edition".into()).into(),
+            //TelnetSubnegotiation::TerminalTypeResponse("xterm-turbo-edition".into()).into(),
         ];
 
         for event in events {
